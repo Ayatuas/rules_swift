@@ -84,8 +84,8 @@ void WorkProcessor::ProcessWorkRequest(
   std::string emit_module_path;
   bool is_wmo = false;
   bool is_dump_ast = false;
-
   std::string prev_arg;
+  std::string swiftgenerateheader_path;
   for (std::string arg : request.arguments) {
     std::string original_arg = arg;
     // Peel off the `-output-file-map` argument, so we can rewrite it if
@@ -101,6 +101,8 @@ void WorkProcessor::ProcessWorkRequest(
       emit_module_path = arg;
     } else if (ArgumentEnablesWMO(arg)) {
       is_wmo = true;
+    } else if (prev_arg == "-emit-objc-header-path") {
+      swiftgenerateheader_path = arg;
     }
 
     if (!arg.empty()) {
@@ -114,7 +116,7 @@ void WorkProcessor::ProcessWorkRequest(
 
   if (!output_file_map_path.empty()) {
     if (is_incremental) {
-      output_file_map.ReadFromPath(output_file_map_path, emit_module_path);
+      output_file_map.ReadFromPath(output_file_map_path, emit_module_path, swiftgenerateheader_path);
 
       // Rewrite the output file map to use the incremental storage area and
       // pass the compiler the path to the rewritten file.

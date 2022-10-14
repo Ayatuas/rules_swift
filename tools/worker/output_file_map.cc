@@ -54,10 +54,11 @@ static std::string MakeIncrementalOutputPath(std::string path,
 };  // end namespace
 
 void OutputFileMap::ReadFromPath(const std::string &path,
-                                 const std::string &emit_module_path) {
+                                 const std::string &emit_module_path,
+                                 const std::string &swiftgenerateheader_path) {
   std::ifstream stream(path);
   stream >> json_;
-  UpdateForIncremental(path, emit_module_path);
+  UpdateForIncremental(path, emit_module_path, swiftgenerateheader_path);
 }
 
 void OutputFileMap::WriteToPath(const std::string &path) {
@@ -66,7 +67,8 @@ void OutputFileMap::WriteToPath(const std::string &path) {
 }
 
 void OutputFileMap::UpdateForIncremental(const std::string &path,
-                                         const std::string &emit_module_path) {
+                                         const std::string &emit_module_path,
+                                         const std::string &swiftgenerateheader_path) {
   bool derived =
       path.find(".derived_output_file_map.json") != std::string::npos;
 
@@ -169,6 +171,14 @@ void OutputFileMap::UpdateForIncremental(const std::string &path,
     auto copied_swiftsourceinfo_path =
         MakeIncrementalOutputPath(swiftsourceinfo_path, derived);
     incremental_inputs[swiftsourceinfo_path] = copied_swiftsourceinfo_path;
+
+    // In some cases of incremental builds, the compiler would not generate 
+    // "*-Swift.h", and then bazel would miss output.
+    if (!swiftgenerateheader_path.empty()) {
+      auto copied_swiftgenerateheader_path =
+        MakeIncrementalOutputPath(swiftgenerateheader_path, derived);
+      incremental_inputs[swiftgenerateheader_path] = copied_swiftgenerateheader_path;
+    }
   }
 
   json_ = new_output_file_map;
